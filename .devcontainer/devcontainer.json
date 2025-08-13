@@ -1,5 +1,6 @@
 {
   "name": "Claude Code Sandbox",
+  
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
@@ -9,7 +10,9 @@
       "ZSH_IN_DOCKER_VERSION": "1.2.0"
     }
   },
+  "shutdownAction": "stopContainer",
   "runArgs": [
+    "--name", "DevContainer_AppsettingsToYamlEnvironment",
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],
