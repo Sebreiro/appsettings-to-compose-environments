@@ -44,7 +44,7 @@ jobs:
       # - name: Build application
       #   run: npx vite build --base=/$REPO/
       - name: Build application
-        run: npm run build --base=/$REPO/
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
 
       - name: Add SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html
