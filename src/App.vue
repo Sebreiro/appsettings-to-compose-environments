@@ -14,14 +14,14 @@
           <h2>Input</h2>
           <div class="input-methods">
             <div class="method-tabs">
-              <button 
+              <button
                 class="tab-button"
                 :class="{ active: inputMethod === 'editor' }"
                 @click="setInputMethod('editor')"
               >
                 JSON Editor
               </button>
-              <button 
+              <button
                 class="tab-button"
                 :class="{ active: inputMethod === 'upload' }"
                 @click="setInputMethod('upload')"
@@ -33,8 +33,10 @@
             <div class="method-content">
               <div v-if="inputMethod === 'editor'" class="editor-container">
                 <div class="editor-header">
-                  <label for="json-input" class="editor-label">Paste your appsettings.json content:</label>
-                  <button 
+                  <label for="json-input" class="editor-label"
+                    >Paste your appsettings.json content:</label
+                  >
+                  <button
                     v-if="jsonInput"
                     class="clear-button"
                     @click="clearInput"
@@ -98,24 +100,13 @@
 
             <div class="setting-group">
               <label for="prefix" class="setting-label">Variable Prefix:</label>
-              <input 
-                id="prefix" 
-                v-model="variablePrefix" 
-                type="text" 
+              <input
+                id="prefix"
+                v-model="variablePrefix"
+                type="text"
                 class="setting-input"
                 placeholder="e.g., MYAPP_"
               />
-            </div>
-
-            <div class="setting-group">
-              <label class="checkbox-label">
-                <input 
-                  v-model="includeTypeHints" 
-                  type="checkbox" 
-                  class="setting-checkbox"
-                />
-                Include Type Hints
-              </label>
             </div>
           </div>
         </section>
@@ -145,11 +136,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import { 
-  convertToDockerCompose, 
-  convertToEnvFile, 
+import {
+  convertToDockerCompose,
+  convertToEnvFile,
   convertToPlainText,
-  validateAppsettingsJson
+  validateAppsettingsJson,
 } from './core/index'
 import type { ConversionOptions, OutputFormat, ConversionServiceResult } from './core/types'
 import FileUpload from './components/FileUpload.vue'
@@ -179,7 +170,7 @@ const conversionOptions = computed<Partial<ConversionOptions>>(() => ({
   includeTypeHints: includeTypeHints.value,
   keySeparator: '__',
   nullHandling: 'empty',
-  includeArrayIndices: true
+  includeArrayIndices: true,
 }))
 
 // Methods
@@ -239,21 +230,21 @@ const convertJson = async () => {
         result = await convertToDockerCompose(jsonInput.value, {
           conversionOptions: conversionOptions.value,
           useArrayFormat: true,
-          indentLevel: 2
+          indentLevel: 2,
         })
         break
       case 'env-file':
         result = await convertToEnvFile(jsonInput.value, {
           conversionOptions: conversionOptions.value,
           includeComments: includeTypeHints.value,
-          quoteValues: true
+          quoteValues: true,
         })
         break
       case 'plain-text':
         result = await convertToPlainText(jsonInput.value, {
           conversionOptions: conversionOptions.value,
           separator: '=',
-          includeExport: false
+          includeExport: false,
         })
         break
       default:
@@ -300,7 +291,7 @@ const downloadOutput = () => {
   const fileName = getFileName()
   const blob = new Blob([conversionResult.value.output], { type: 'text/plain' })
   const url = URL.createObjectURL(blob)
-  
+
   const link = document.createElement('a')
   link.href = url
   link.download = fileName
@@ -312,8 +303,10 @@ const downloadOutput = () => {
 
 const getFileName = (): string => {
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
-  const prefix = variablePrefix.value ? `${variablePrefix.value.replace(/[^a-zA-Z0-9]/g, '_')}_` : ''
-  
+  const prefix = variablePrefix.value
+    ? `${variablePrefix.value.replace(/[^a-zA-Z0-9]/g, '_')}_`
+    : ''
+
   switch (selectedFormat.value) {
     case 'docker-compose':
       return `${prefix}docker-compose_${timestamp}.yml`
@@ -355,7 +348,7 @@ const handleCopy = () => {
 const handleDownload = (format: OutputFormat, content: string, filename: string) => {
   const blob = new Blob([content], { type: 'text/plain' })
   const url = URL.createObjectURL(blob)
-  
+
   const link = document.createElement('a')
   link.href = url
   link.download = filename
@@ -363,7 +356,7 @@ const handleDownload = (format: OutputFormat, content: string, filename: string)
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
-  
+
   console.log(`Downloaded: ${filename}`)
 }
 
@@ -637,16 +630,16 @@ section h2 {
   .app-title {
     font-size: 2rem;
   }
-  
+
   .container {
     padding: 0 0.5rem;
   }
-  
+
   section {
     padding: 1.5rem;
     margin-bottom: 1rem;
   }
-  
+
   .settings-grid {
     grid-template-columns: 1fr;
   }
