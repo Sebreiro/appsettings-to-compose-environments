@@ -26,11 +26,11 @@
 ## Core Business Logic Implementation
 
 ### Type Definitions
-- [ ] Create TypeScript interfaces in `src/core/types.ts`
-- [ ] Define AppSettings interface structure
-- [ ] Define ConversionOptions interface
-- [ ] Define OutputFormat types
-- [ ] Define ValidationResult types
+- [x] Create TypeScript interfaces in `src/core/types.ts`
+- [x] Define AppSettings interface structure
+- [x] Define ConversionOptions interface
+- [x] Define OutputFormat types
+- [x] Define ValidationResult types
 
 ### JSON Parser Module (`src/core/parser.ts`)
 - [ ] Implement JSON validation function
