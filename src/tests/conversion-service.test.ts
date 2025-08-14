@@ -12,19 +12,47 @@ import {
 } from '../core/conversion-service'
 
 describe('Conversion Service', () => {
+  // Use the exact same JSON as converts-examples.md
   const validJson = `{
-    "ConnectionStrings": {
-      "DefaultConnection": "Server=localhost;Database=Test;"
-    },
-    "ApiSettings": {
-      "BaseUrl": "https://api.example.com",
-      "Timeout": 30
-    },
-    "FeatureFlags": {
-      "EnableNewFeature": true
-    },
-    "Servers": ["server1.com", "server2.com"]
-  }`
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=MyApp;Trusted_Connection=true;",
+    "Redis": "localhost:6379"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }
+  },
+  "AllowedHosts": "*",
+  "ApiSettings": {
+    "BaseUrl": "https://api.example.com",
+    "Timeout": 30,
+    "ApiKey": "your-api-key-here"
+  },
+  "FeatureFlags": {
+    "EnableNewFeature": true,
+    "EnableBetaFeature": false
+  },
+  "Servers": [
+    "https://server1.example.com",
+    "https://server2.example.com",
+    "https://server3.example.com"
+  ],
+  "DatabaseSettings": {
+    "Providers": [
+      {
+        "Name": "SqlServer",
+        "ConnectionString": "Server=sql1;Database=DB1;"
+      },
+      {
+        "Name": "PostgreSQL",
+        "ConnectionString": "Host=pg1;Database=DB2;"
+      }
+    ]
+  }
+}`
 
   const invalidJson = `{
     "ConnectionStrings": {
@@ -42,10 +70,13 @@ describe('Conversion Service', () => {
       expect(result.success).toBe(true)
       expect(result.output).toContain('environment:')
       expect(result.output).toContain('ConnectionStrings__DefaultConnection')
+      expect(result.output).toContain('ConnectionStrings__Redis')
+      expect(result.output).toContain('DatabaseSettings__Providers__0__Name')
       expect(result.environmentVariables).toBeDefined()
-      expect(result.environmentVariables!.length).toBeGreaterThan(0)
+      expect(result.environmentVariables!.length).toBe(18) // Should match exact count from converts-examples.md
       expect(result.stats).toBeDefined()
-      expect(result.stats!.totalVariables).toBeGreaterThan(0)
+      expect(result.stats!.totalVariables).toBeGreaterThan(10)
+      expect(result.stats!.arrayCount).toBe(2) // Servers array + Providers array
     })
 
     it('should handle invalid JSON gracefully', async () => {
@@ -89,6 +120,7 @@ describe('Conversion Service', () => {
 
       expect(result.success).toBe(true)
       expect(result.environmentVariables).toHaveLength(0)
+      expect(result.stats!.totalVariables).toBe(0)
     })
 
     it('should provide comprehensive statistics', async () => {
@@ -99,9 +131,9 @@ describe('Conversion Service', () => {
 
       expect(result.success).toBe(true)
       expect(result.stats).toBeDefined()
-      expect(result.stats!.totalVariables).toBeGreaterThan(0)
-      expect(result.stats!.maxDepth).toBeGreaterThan(0)
-      expect(result.stats!.arrayCount).toBeGreaterThan(0)
+      expect(result.stats!.totalVariables).toBeGreaterThan(10)
+      expect(result.stats!.maxDepth).toBeGreaterThan(2)
+      expect(result.stats!.arrayCount).toBe(2)
       expect(Array.isArray(result.stats!.recommendations)).toBe(true)
     })
 
@@ -311,51 +343,55 @@ describe('Conversion Service', () => {
   })
 
   describe('integration with converts-examples.md', () => {
-    const exampleJson = `{
-      "ConnectionStrings": {
-        "DefaultConnection": "Server=localhost;Database=MyApp;Trusted_Connection=true;",
-        "Redis": "localhost:6379"
-      },
-      "Logging": {
-        "LogLevel": {
-          "Default": "Information",
-          "Microsoft": "Warning"
-        }
-      },
-      "AllowedHosts": "*",
-      "ApiSettings": {
-        "Timeout": 30
-      },
-      "FeatureFlags": {
-        "EnableNewFeature": true,
-        "EnableBetaFeature": false
-      },
-      "Servers": [
-        "https://server1.example.com",
-        "https://server2.example.com"
-      ]
-    }`
-
+    // Use the exact same JSON as the main tests (which is from converts-examples.md)
     it('should process the example JSON correctly', async () => {
-      const result = await convertToDockerCompose(exampleJson)
+      const result = await convertToDockerCompose(validJson)
 
       expect(result.success).toBe(true)
       expect(result.environmentVariables).toBeDefined()
+      expect(result.environmentVariables!.length).toBe(18) // Exact count from converts-examples.md
       
       const envMap = new Map(result.environmentVariables!.map(env => [env.key, env.value]))
       
-      // Check key conversions from examples
+      // Check all key conversions from converts-examples.md
       expect(envMap.has('ConnectionStrings__DefaultConnection')).toBe(true)
+      expect(envMap.has('ConnectionStrings__Redis')).toBe(true)
       expect(envMap.has('Logging__LogLevel__Default')).toBe(true)
+      expect(envMap.has('Logging__LogLevel__Microsoft')).toBe(true)
+      expect(envMap.has('Logging__LogLevel__Microsoft__Hosting__Lifetime')).toBe(true)
+      expect(envMap.has('AllowedHosts')).toBe(true)
+      expect(envMap.has('ApiSettings__BaseUrl')).toBe(true)
+      expect(envMap.has('ApiSettings__Timeout')).toBe(true)
+      expect(envMap.has('ApiSettings__ApiKey')).toBe(true)
+      expect(envMap.has('FeatureFlags__EnableNewFeature')).toBe(true)
+      expect(envMap.has('FeatureFlags__EnableBetaFeature')).toBe(true)
       expect(envMap.has('Servers__0')).toBe(true)
       expect(envMap.has('Servers__1')).toBe(true)
+      expect(envMap.has('Servers__2')).toBe(true)
+      expect(envMap.has('DatabaseSettings__Providers__0__Name')).toBe(true)
+      expect(envMap.has('DatabaseSettings__Providers__0__ConnectionString')).toBe(true)
+      expect(envMap.has('DatabaseSettings__Providers__1__Name')).toBe(true)
+      expect(envMap.has('DatabaseSettings__Providers__1__ConnectionString')).toBe(true)
       
-      // Check value preservation
+      // Check exact value preservation from converts-examples.md
       expect(envMap.get('ConnectionStrings__DefaultConnection')).toBe('Server=localhost;Database=MyApp;Trusted_Connection=true;')
+      expect(envMap.get('ConnectionStrings__Redis')).toBe('localhost:6379')
+      expect(envMap.get('Logging__LogLevel__Default')).toBe('Information')
+      expect(envMap.get('Logging__LogLevel__Microsoft')).toBe('Warning')
+      expect(envMap.get('Logging__LogLevel__Microsoft__Hosting__Lifetime')).toBe('Information')
       expect(envMap.get('AllowedHosts')).toBe('*')
+      expect(envMap.get('ApiSettings__BaseUrl')).toBe('https://api.example.com')
       expect(envMap.get('ApiSettings__Timeout')).toBe('30')
+      expect(envMap.get('ApiSettings__ApiKey')).toBe('your-api-key-here')
       expect(envMap.get('FeatureFlags__EnableNewFeature')).toBe('true')
       expect(envMap.get('FeatureFlags__EnableBetaFeature')).toBe('false')
+      expect(envMap.get('Servers__0')).toBe('https://server1.example.com')
+      expect(envMap.get('Servers__1')).toBe('https://server2.example.com')
+      expect(envMap.get('Servers__2')).toBe('https://server3.example.com')
+      expect(envMap.get('DatabaseSettings__Providers__0__Name')).toBe('SqlServer')
+      expect(envMap.get('DatabaseSettings__Providers__0__ConnectionString')).toBe('Server=sql1;Database=DB1;')
+      expect(envMap.get('DatabaseSettings__Providers__1__Name')).toBe('PostgreSQL')
+      expect(envMap.get('DatabaseSettings__Providers__1__ConnectionString')).toBe('Host=pg1;Database=DB2;')
     })
   })
 })

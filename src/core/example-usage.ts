@@ -11,7 +11,7 @@ import {
   convertAppsettingsToEnvironmentVariables,
 } from './conversion-service'
 
-// Example JSON from converts-examples.md
+// Example JSON from converts-examples.md (complete version)
 const exampleAppsettingsJson = `{
   "ConnectionStrings": {
     "DefaultConnection": "Server=localhost;Database=MyApp;Trusted_Connection=true;",
@@ -38,7 +38,19 @@ const exampleAppsettingsJson = `{
     "https://server1.example.com",
     "https://server2.example.com",
     "https://server3.example.com"
-  ]
+  ],
+  "DatabaseSettings": {
+    "Providers": [
+      {
+        "Name": "SqlServer",
+        "ConnectionString": "Server=sql1;Database=DB1;"
+      },
+      {
+        "Name": "PostgreSQL",
+        "ConnectionString": "Host=pg1;Database=DB2;"
+      }
+    ]
+  }
 }`
 
 /**
