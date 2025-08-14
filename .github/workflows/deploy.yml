@@ -41,10 +41,10 @@ jobs:
 
       # If using Vite and you prefer not to edit vite.config,
       # you can pass the base at build time instead (replace REPO_NAME):
-      - name: Build application
-        run: npx vite build --base=/$REPO/
       # - name: Build application
-      #   run: npm run build
+      #   run: npx vite build --base=/$REPO/
+      - name: Build application
+        run: npm run build --base=/$REPO/
 
       - name: Add SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html
