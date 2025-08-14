@@ -21,8 +21,8 @@ A frontend-only web application that converts .NET appsettings.json files to doc
   - Output environment variables section
   - Support different output formats (YAML, .env file)
 
-### UI Layer
-- **Framework Options**: React, Vue, or Vanilla TypeScript
+### UI Layer (Vue.js)
+- **Framework**: Vue 3 with Composition API
 - **Components**:
   - File upload/paste area for appsettings.json
   - Live preview of converted output
@@ -73,10 +73,17 @@ src/
 │   ├── converter.ts     # Conversion algorithms
 │   ├── formatter.ts     # Output formatting
 │   └── types.ts         # TypeScript interfaces
-├── ui/                  # User interface
-│   ├── components/      # UI components
-│   ├── styles/          # CSS/SCSS files
-│   └── app.ts          # Main application entry
+├── components/          # Vue components
+│   ├── FileUpload.vue   # File upload component
+│   ├── JsonEditor.vue   # JSON input editor
+│   ├── OutputPreview.vue # Converted output preview
+│   └── SettingsPanel.vue # Conversion settings
+├── styles/              # SCSS stylesheets
+│   ├── main.scss        # Main stylesheet
+│   ├── components.scss  # Component styles
+│   └── variables.scss   # SCSS variables
+├── App.vue              # Root Vue component
+└── main.ts              # Application entry point
 ├── utils/               # Utility functions
 └── tests/              # Unit tests
 ```
@@ -103,11 +110,12 @@ src/
 
 ## Technology Stack
 - **Language**: TypeScript
-- **Build Tool**: Vite or Webpack
-- **Testing**: Jest or Vitest
-- **UI Framework**: TBD (React/Vue/Vanilla)
-- **Styling**: CSS3/SCSS
+- **Build Tool**: Vite
+- **UI Framework**: Vue 3 (Composition API)
+- **Styling**: SCSS
+- **Testing**: Vitest
 - **Deployment**: GitHub Pages
+- **Package Manager**: npm or pnpm
 
 ## Example Conversion
 
@@ -136,10 +144,113 @@ environment:
   - ALLOWEDHOSTS=*
 ```
 
+## CI/CD Pipeline (GitHub Actions)
+
+### Automated Testing Workflow
+```yaml
+# .github/workflows/test.yml
+name: Test Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run type checking
+      run: npm run type-check
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Run unit tests
+      run: npm run test:unit
+    
+    - name: Run coverage
+      run: npm run test:coverage
+    
+    - name: Build project
+      run: npm run build
+```
+
+### Deployment Workflow
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install and build
+      run: |
+        npm ci
+        npm run build
+    
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+    
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './dist'
+    
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v4
+```
+
+## Package.json Scripts
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+    "format": "prettier --write src/"
+  }
+}
+```
+
 ## Success Criteria
 1. Accurate conversion of nested JSON to flat environment variables
 2. Multiple output format support
-3. User-friendly interface with real-time preview
+3. User-friendly Vue.js interface with real-time preview
 4. Robust error handling and validation
-5. Successful deployment on GitHub Pages
-6. Good test coverage (>80%)
+5. Successful deployment on GitHub Pages via GitHub Actions
+6. Good test coverage (>80%) with Vitest
+7. Automated CI/CD pipeline with testing and deployment
+8. TypeScript type safety throughout the application
