@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(cat:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm run test:unit:*)",
+      "Bash(npm run test:coverage:*)"
     ],
     "deny": [],
     "ask": [],
