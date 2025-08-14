@@ -63,7 +63,12 @@
               </div>
 
               <div v-if="inputMethod === 'upload'" class="upload-container">
-                <p>File upload functionality will be implemented in the next step.</p>
+                <FileUpload
+                  @file-loaded="handleFileLoaded"
+                  @file-removed="handleFileRemoved"
+                  @error="handleUploadError"
+                  :disabled="isConverting"
+                />
               </div>
             </div>
           </div>
@@ -117,53 +122,17 @@
 
         <!-- Output Section -->
         <section class="output-section">
-          <div class="output-header">
-            <h2>Output</h2>
-            <div class="output-actions" v-if="conversionResult">
-              <button 
-                class="copy-button"
-                @click="copyToClipboard"
-                :disabled="!conversionResult"
-              >
-                Copy to Clipboard
-              </button>
-              <button 
-                class="download-button"
-                @click="downloadOutput"
-                :disabled="!conversionResult"
-              >
-                Download
-              </button>
-            </div>
-          </div>
-
-          <div v-if="isConverting" class="loading-state">
-            <div class="spinner"></div>
-            <p>Converting...</p>
-          </div>
-
-          <div v-else-if="conversionError" class="conversion-error">
-            <strong>Conversion Error:</strong> {{ conversionError }}
-          </div>
-
-          <div v-else-if="conversionResult" class="output-container">
-            <div class="output-stats">
-              <span class="stat">{{ conversionResult.environmentVariables?.length || 0 }} variables</span>
-              <span class="stat" v-if="conversionResult.stats">{{ conversionResult.stats.arrayCount }} arrays</span>
-              <span class="stat" v-if="conversionResult.stats">Max depth: {{ conversionResult.stats.maxDepth }}</span>
-            </div>
-            <pre class="output-content">{{ conversionResult.output }}</pre>
-            <div v-if="conversionResult.warnings && conversionResult.warnings.length > 0" class="output-warnings">
-              <strong>Warnings:</strong>
-              <ul>
-                <li v-for="warning in conversionResult.warnings" :key="warning">{{ warning }}</li>
-              </ul>
-            </div>
-          </div>
-
-          <div v-else class="output-placeholder">
-            <p>Enter valid JSON above to see the converted output</p>
-          </div>
+          <OutputPreview
+            :result="conversionResult"
+            :selected-format="selectedFormat"
+            :is-loading="isConverting"
+            :error="conversionError"
+            :has-retry="!!conversionError"
+            @format-change="handleFormatChange"
+            @copy="handleCopy"
+            @download="handleDownload"
+            @retry="handleRetry"
+          />
         </section>
       </div>
     </main>
@@ -183,6 +152,8 @@ import {
   validateAppsettingsJson
 } from './core/index'
 import type { ConversionOptions, OutputFormat, ConversionServiceResult } from './core/types'
+import FileUpload from './components/FileUpload.vue'
+import OutputPreview from './components/OutputPreview.vue'
 
 // Reactive state
 const inputMethod = ref<'editor' | 'upload'>('editor')
@@ -352,6 +323,53 @@ const getFileName = (): string => {
       return `${prefix}variables_${timestamp}.txt`
     default:
       return `${prefix}output_${timestamp}.txt`
+  }
+}
+
+// New event handlers for components
+const handleFileLoaded = (content: string, fileName: string) => {
+  jsonInput.value = content
+  // Also update validation and conversion
+  handleJsonInput()
+  console.log(`File loaded: ${fileName}`)
+}
+
+const handleFileRemoved = () => {
+  clearInput()
+}
+
+const handleUploadError = (message: string) => {
+  // You could show a toast notification here
+  console.error('Upload error:', message)
+}
+
+const handleFormatChange = (format: OutputFormat) => {
+  selectedFormat.value = format
+}
+
+const handleCopy = () => {
+  // You could show a success toast here
+  console.log('Content copied to clipboard')
+}
+
+const handleDownload = (format: OutputFormat, content: string, filename: string) => {
+  const blob = new Blob([content], { type: 'text/plain' })
+  const url = URL.createObjectURL(blob)
+  
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+  
+  console.log(`Downloaded: ${filename}`)
+}
+
+const handleRetry = () => {
+  if (jsonInput.value.trim()) {
+    convertJson()
   }
 }
 
@@ -595,133 +613,9 @@ section h2 {
   cursor: pointer;
 }
 
-/* Output */
-.output-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.output-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.copy-button,
-.download-button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.copy-button {
-  background: #28a745;
-  color: white;
-}
-
-.copy-button:hover:not(:disabled) {
-  background: #218838;
-}
-
-.download-button {
-  background: #007bff;
-  color: white;
-}
-
-.download-button:hover:not(:disabled) {
-  background: #0069d9;
-}
-
-.copy-button:disabled,
-.download-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Loading state */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 2rem;
-}
-
-.spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Output content */
-.output-stats {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
-.stat {
-  background: #e9ecef;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-}
-
-.output-content {
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 6px;
-  padding: 1rem;
-  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  max-height: 500px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.output-warnings {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 6px;
-  color: #856404;
-}
-
-.output-warnings ul {
-  margin: 0.5rem 0 0 0;
-  padding-left: 1.5rem;
-}
-
-.conversion-error {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 6px;
-  color: #721c24;
-}
-
-.output-placeholder {
-  text-align: center;
-  padding: 3rem;
-  color: #6c757d;
-  font-style: italic;
+/* Upload container styling */
+.upload-container {
+  width: 100%;
 }
 
 /* Footer */
@@ -755,16 +649,6 @@ section h2 {
   
   .settings-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .output-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-  
-  .output-actions {
-    justify-content: center;
   }
 }
 </style>

@@ -83,12 +83,12 @@
 - [x] Set up global state management
 
 ### File Upload Component (`src/components/FileUpload.vue`)
-- [ ] Create file input interface
-- [ ] Implement drag & drop functionality
-- [ ] Add file validation (JSON only)
-- [ ] Handle file reading and parsing
-- [ ] Display upload status and errors
-- [ ] Write component tests
+- [x] Create file input interface
+- [x] Implement drag & drop functionality
+- [x] Add file validation (JSON only)
+- [x] Handle file reading and parsing
+- [x] Display upload status and errors
+- [x] Write component tests
 
 ### JSON Editor Component (`src/components/JsonEditor.vue`)
 - [ ] Create textarea for direct JSON input
@@ -99,12 +99,12 @@
 - [ ] Write component tests
 
 ### Output Preview Component (`src/components/OutputPreview.vue`)
-- [ ] Display converted environment variables
-- [ ] Implement real-time preview updates
-- [ ] Add syntax highlighting for output
-- [ ] Show different format tabs (docker-compose, .env, plain)
-- [ ] Add copy to clipboard functionality
-- [ ] Write component tests
+- [x] Display converted environment variables
+- [x] Implement real-time preview updates
+- [x] Add syntax highlighting for output
+- [x] Show different format tabs (docker-compose, .env, plain)
+- [x] Add copy to clipboard functionality
+- [x] Write component tests
 
 ### Settings Panel Component (`src/components/SettingsPanel.vue`)
 - [ ] Create conversion options interface
