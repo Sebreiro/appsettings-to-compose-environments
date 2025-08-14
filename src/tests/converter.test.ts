@@ -443,7 +443,7 @@ describe('analyzeConversionComplexity', () => {
     const data: JsonObject = {}
     
     // Create large, deep, array-heavy structure
-    let current = data
+    const current = data
     for (let i = 0; i < 101; i++) {
       current[`key${i}`] = `value${i}`
     }

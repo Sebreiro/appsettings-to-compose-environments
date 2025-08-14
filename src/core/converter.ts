@@ -358,7 +358,6 @@ export function validateConversionOptions(options: Partial<ConversionOptions>): 
 
   // Validate prefix (remove invalid characters)
   if (validated.prefix) {
-    const originalPrefix = validated.prefix
     validated.prefix = validated.prefix.replace(/[^a-zA-Z0-9_]/g, '_')
     
     if (!validated.prefix.endsWith('_') && validated.prefix.length > 0) {

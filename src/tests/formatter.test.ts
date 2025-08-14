@@ -125,7 +125,7 @@ describe('formatOutput', () => {
       // Check that all lines start with proper indentation
       const lines = result.split('\n').filter(line => line.trim() !== '')
       lines.slice(1).forEach(line => {
-        expect(line).toMatch(/^  - \w/)
+        expect(line).toMatch(/^ {2}- \w/)
       })
     })
 
@@ -154,7 +154,7 @@ describe('formatOutput', () => {
       const lines = result.split('\n')
       lines.slice(1).forEach(line => {
         if (line.trim()) {
-          expect(line).toMatch(/^    - /)
+          expect(line).toMatch(/^ {4}- /)
         }
       })
     })

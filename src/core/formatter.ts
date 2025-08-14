@@ -184,7 +184,7 @@ function escapeYamlValue(value: string): string {
   const needsQuoting = 
     /^(true|false|null|yes|no|on|off|\d+\.?\d*|[0-9]+e[0-9]+)$/i.test(value) ||
     /^[+-]/.test(value) ||
-    /[:\[\]{}|>*&!%@`]/.test(value) ||
+    /[:[\]{}|>*&!%@`]/.test(value) ||
     /^\s/.test(value) ||
     /\s$/.test(value) ||
     value.includes('#') ||
@@ -216,7 +216,7 @@ function escapeEnvValue(value: string, forceQuotes: boolean): string {
 
   if (needsQuoting) {
     // Use double quotes and escape special characters
-    let escaped = value
+    const escaped = value
       .replace(/\\/g, '\\\\')  // Escape backslashes
       .replace(/"/g, '\\"')    // Escape double quotes
       .replace(/\n/g, '\\n')   // Escape newlines
@@ -250,33 +250,6 @@ function escapeShellValue(value: string): string {
   return `'${escaped}'`
 }
 
-/**
- * Adds type hint comments to formatted output
- * @param envVar Environment variable
- * @param includeTypeHints Whether to include type hints
- * @returns Comment line or empty string
- */
-function generateTypeHintComment(envVar: EnvironmentVariable, includeTypeHints: boolean): string {
-  if (!includeTypeHints) {
-    return ''
-  }
-
-  const hints: string[] = []
-  
-  if (envVar.originalType !== 'string') {
-    hints.push(`type: ${envVar.originalType}`)
-  }
-
-  if (envVar.isArrayElement && envVar.arrayIndex !== undefined) {
-    hints.push(`array index: ${envVar.arrayIndex}`)
-  }
-
-  if (envVar.originalPath) {
-    hints.push(`path: ${envVar.originalPath}`)
-  }
-
-  return hints.length > 0 ? `# ${hints.join(', ')}` : ''
-}
 
 /**
  * Validates that environment variable names are valid
