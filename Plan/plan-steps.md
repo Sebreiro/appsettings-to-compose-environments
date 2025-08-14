@@ -38,7 +38,7 @@
 - [x] Add error handling for malformed JSON
 - [x] Handle nested objects parsing
 - [x] Handle arrays in JSON structure
-- [ ] Write unit tests for parser module
+- [x] Write unit tests for parser module
 
 ### Conversion Engine (`src/core/converter.ts`)
 - [x] Implement key transformation logic (nested to flat)
@@ -46,7 +46,7 @@
 - [x] Handle special characters in keys
 - [x] Implement array handling logic
 - [x] Add prefix support for environment variables
-- [ ] Write unit tests for converter module
+- [x] Write unit tests for converter module
 
 ### Output Formatter (`src/core/formatter.ts`)
 - [x] Implement docker-compose YAML formatter
@@ -54,7 +54,7 @@
 - [x] Create plain environment variables formatter
 - [x] Add value escaping for special characters
 - [x] Implement comments for data type preservation
-- [ ] Write unit tests for formatter module
+- [x] Write unit tests for formatter module
 
 ## Vue.js UI Components
 
