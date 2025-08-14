@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import * as yaml from 'js-yaml'
 import {
   convertAppsettingsToEnvironmentVariables,
   convertToDockerCompose,
@@ -392,6 +393,132 @@ describe('Conversion Service', () => {
       expect(envMap.get('DatabaseSettings__Providers__0__ConnectionString')).toBe('Server=sql1;Database=DB1;')
       expect(envMap.get('DatabaseSettings__Providers__1__Name')).toBe('PostgreSQL')
       expect(envMap.get('DatabaseSettings__Providers__1__ConnectionString')).toBe('Host=pg1;Database=DB2;')
+    })
+  })
+
+  describe('YAML validation and special character handling', () => {
+    // Helper function to validate that generated YAML is syntactically correct
+    const validateYamlSyntax = (yamlString: string): void => {
+      try {
+        const parsed = yaml.load(yamlString)
+        expect(parsed).toBeDefined()
+        expect(typeof parsed).toBe('object')
+        expect(parsed).not.toBeNull()
+        expect((parsed as Record<string, any>).environment).toBeDefined()
+      } catch (error) {
+        throw new Error(`Invalid YAML syntax generated: ${(error as Error).message}\n\nGenerated YAML:\n${yamlString}`)
+      }
+    }
+
+    // Helper function to extract original environment variables from conversion result for comparison
+    const getEnvironmentMap = (result: any): Map<string, string> => {
+      const envVars = result.environmentVariables
+      return new Map(envVars.map((env: any) => [env.key, env.value]))
+    }
+
+    it('should generate valid YAML for values with colon characters', async () => {
+      const appsettingsWithColons = `{
+        "ConnectionString": "Server=localhost:1433;Database=MyApp",
+        "ApiUrl": "https://api.example.com:8080/health",
+        "RedisUrl": "redis://localhost:6379",
+        "TimeValue": "12:30:45",
+        "IPv6Address": "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+        "WindowsPath": "C:\\\\Program Files\\\\MyApp"
+      }`
+
+      const result = await convertToDockerCompose(appsettingsWithColons)
+      expect(result.success).toBe(true)
+      
+      // Validate that the generated YAML is syntactically correct
+      validateYamlSyntax(result.output!)
+      
+      // Verify that values are preserved correctly through the conversion
+      const envMap = getEnvironmentMap(result)
+      expect(envMap.get('ConnectionString')).toBe('Server=localhost:1433;Database=MyApp')
+      expect(envMap.get('ApiUrl')).toBe('https://api.example.com:8080/health')
+      expect(envMap.get('RedisUrl')).toBe('redis://localhost:6379')
+      expect(envMap.get('TimeValue')).toBe('12:30:45')
+      expect(envMap.get('IPv6Address')).toBe('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
+      expect(envMap.get('WindowsPath')).toBe('C:\\Program Files\\MyApp')
+      
+      // Verify that colon-containing values are properly quoted in the YAML output
+      expect(result.output!).toContain('ConnectionString="Server=localhost:1433;Database=MyApp"')
+      expect(result.output!).toContain('ApiUrl="https://api.example.com:8080/health"')
+      expect(result.output!).toContain('RedisUrl="redis://localhost:6379"')
+      expect(result.output!).toContain('TimeValue="12:30:45"')
+    })
+
+    it('should generate valid YAML for comprehensive special character test case', async () => {
+      const comprehensiveAppsettings = `{
+        "Database": {
+          "ConnectionString": "Server=localhost:1433;Database=MyApp;User=admin;Password=P@ssw0rd#123",
+          "Timeout": "00:30:00",
+          "Options": "?sslmode=require&application_name=MyApp"
+        },
+        "SpecialValues": {
+          "HashValue": "#FF5733 color code",
+          "CommentLike": "# This looks like a comment",
+          "YamlLiterals": {
+            "BooleanTrue": "true",
+            "BooleanFalse": "false",
+            "NullValue": "null",
+            "NumberValue": "123"
+          },
+          "WithQuotes": "say \\"hello\\" world",
+          "JsonString": "{\\"key\\": \\"value\\"}",
+          "SpecialChars": "pipe | grep & wildcard * reference",
+          "Whitespace": " starts with space ",
+          "EmptyValue": "",
+          "PlusPrefix": "+123",
+          "MinusPrefix": "-456"
+        },
+        "Servers": [
+          "https://api.example.com:8080/v1#section",
+          "ws://websocket.example.com:3000?token=abc"
+        ]
+      }`
+
+      const result = await convertToDockerCompose(comprehensiveAppsettings)
+      expect(result.success).toBe(true)
+      
+      // The most important test: validate that generated YAML is syntactically correct
+      validateYamlSyntax(result.output!)
+      
+      // Verify that values are preserved correctly through the conversion process
+      const envMap = getEnvironmentMap(result)
+      expect(envMap.get('Database__ConnectionString')).toBe('Server=localhost:1433;Database=MyApp;User=admin;Password=P@ssw0rd#123')
+      expect(envMap.get('Database__Timeout')).toBe('00:30:00')
+      expect(envMap.get('Database__Options')).toBe('?sslmode=require&application_name=MyApp')
+      expect(envMap.get('SpecialValues__HashValue')).toBe('#FF5733 color code')
+      expect(envMap.get('SpecialValues__CommentLike')).toBe('# This looks like a comment')
+      expect(envMap.get('SpecialValues__YamlLiterals__BooleanTrue')).toBe('true')
+      expect(envMap.get('SpecialValues__YamlLiterals__BooleanFalse')).toBe('false')
+      expect(envMap.get('SpecialValues__YamlLiterals__NullValue')).toBe('null')
+      expect(envMap.get('SpecialValues__YamlLiterals__NumberValue')).toBe('123')
+      expect(envMap.get('SpecialValues__WithQuotes')).toBe('say "hello" world')
+      expect(envMap.get('SpecialValues__JsonString')).toBe('{"key": "value"}')
+      expect(envMap.get('SpecialValues__SpecialChars')).toBe('pipe | grep & wildcard * reference')
+      expect(envMap.get('SpecialValues__Whitespace')).toBe(' starts with space ')
+      expect(envMap.get('SpecialValues__EmptyValue')).toBe('')
+      expect(envMap.get('SpecialValues__PlusPrefix')).toBe('+123')
+      expect(envMap.get('SpecialValues__MinusPrefix')).toBe('-456')
+      expect(envMap.get('Servers__0')).toBe('https://api.example.com:8080/v1#section')
+      expect(envMap.get('Servers__1')).toBe('ws://websocket.example.com:3000?token=abc')
+      
+      // Verify that problematic values are properly quoted in the YAML output
+      expect(result.output!).toContain('"Server=localhost:1433;Database=MyApp;User=admin;Password=P@ssw0rd#123"')
+      expect(result.output!).toContain('"00:30:00"')
+      expect(result.output!).toContain('"#FF5733 color code"')
+      expect(result.output!).toContain('"# This looks like a comment"')
+      expect(result.output!).toContain('"true"') // YAML literal that needs quoting
+      expect(result.output!).toContain('"false"') // YAML literal that needs quoting
+      expect(result.output!).toContain('"null"') // YAML literal that needs quoting
+      expect(result.output!).toContain('"123"') // Number that needs quoting
+      expect(result.output!).toContain('"say \\"hello\\" world"') // Quote escaping
+      expect(result.output!).toContain(' starts with space ') // Whitespace preservation
+      expect(result.output!).toContain('""') // Empty value
+      expect(result.output!).toContain('"+123"') // Plus prefix
+      expect(result.output!).toContain('"-456"') // Minus prefix
     })
   })
 })

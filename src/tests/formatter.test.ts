@@ -198,6 +198,437 @@ describe('formatOutput', () => {
       expect(result).toContain('BOOLEAN_LIKE="true"') // Should be quoted as it looks like boolean
       expect(result).toContain('EMPTY_VALUE=""')
     })
+
+    it('should quote Docker Compose YAML values with colon characters correctly', () => {
+      const colonVars: EnvironmentVariable[] = [
+        {
+          key: 'CONNECTION_STRING',
+          value: 'Server=localhost:1433;Database=MyApp',
+          originalPath: 'ConnectionString',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'URL_WITH_PORT',
+          value: 'https://api.example.com:8080/health',
+          originalPath: 'UrlWithPort',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'REDIS_URL',
+          value: 'redis://localhost:6379',
+          originalPath: 'RedisUrl',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'TIME_VALUE',
+          value: '12:30:45',
+          originalPath: 'TimeValue',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(colonVars, 'docker-compose', defaultFormatOptions)
+      
+      // All values with colons should be quoted to prevent YAML parsing issues
+      expect(result).toContain('CONNECTION_STRING="Server=localhost:1433;Database=MyApp"')
+      expect(result).toContain('URL_WITH_PORT="https://api.example.com:8080/health"')
+      expect(result).toContain('REDIS_URL="redis://localhost:6379"')
+      expect(result).toContain('TIME_VALUE="12:30:45"')
+    })
+
+    it('should quote Docker Compose YAML values with hash/comment characters correctly', () => {
+      const hashVars: EnvironmentVariable[] = [
+        {
+          key: 'PASSWORD_HASH',
+          value: 'user123#password!@#',
+          originalPath: 'PasswordHash',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'URL_WITH_FRAGMENT',
+          value: 'https://example.com/page#section1',
+          originalPath: 'UrlWithFragment',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'CSS_COLOR',
+          value: '#FF5733',
+          originalPath: 'CssColor',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'COMMENT_LIKE',
+          value: '# This looks like a comment',
+          originalPath: 'CommentLike',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(hashVars, 'docker-compose', defaultFormatOptions)
+      
+      // All values with # should be quoted to prevent YAML comment interpretation
+      expect(result).toContain('PASSWORD_HASH="user123#password!@#"')
+      expect(result).toContain('URL_WITH_FRAGMENT="https://example.com/page#section1"')
+      expect(result).toContain('CSS_COLOR="#FF5733"')
+      expect(result).toContain('COMMENT_LIKE="# This looks like a comment"')
+    })
+
+    it('should quote Docker Compose YAML values with other special YAML characters correctly', () => {
+      const specialYamlVars: EnvironmentVariable[] = [
+        {
+          key: 'PIPE_VALUE',
+          value: 'command | grep something',
+          originalPath: 'PipeValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'GREATER_THAN',
+          value: 'multiline > folded style',
+          originalPath: 'GreaterThan',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'ASTERISK_VALUE',
+          value: 'wildcard * pattern',
+          originalPath: 'AsteriskValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'AMPERSAND_VALUE',
+          value: 'anchor & reference',
+          originalPath: 'AmpersandValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'EXCLAMATION_VALUE',
+          value: 'tag !important',
+          originalPath: 'ExclamationValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'PERCENT_VALUE',
+          value: 'encoded %20 space',
+          originalPath: 'PercentValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'AT_VALUE',
+          value: 'email@example.com',
+          originalPath: 'AtValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'BACKTICK_VALUE',
+          value: 'command `date`',
+          originalPath: 'BacktickValue',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(specialYamlVars, 'docker-compose', defaultFormatOptions)
+      
+      // All values with YAML special characters should be quoted
+      expect(result).toContain('PIPE_VALUE="command | grep something"')
+      expect(result).toContain('GREATER_THAN="multiline > folded style"')
+      expect(result).toContain('ASTERISK_VALUE="wildcard * pattern"')
+      expect(result).toContain('AMPERSAND_VALUE="anchor & reference"')
+      expect(result).toContain('EXCLAMATION_VALUE="tag !important"')
+      expect(result).toContain('PERCENT_VALUE="encoded %20 space"')
+      expect(result).toContain('AT_VALUE="email@example.com"')
+      expect(result).toContain('BACKTICK_VALUE="command `date`"')
+    })
+
+    it('should quote Docker Compose YAML values with brackets and braces correctly', () => {
+      const bracketVars: EnvironmentVariable[] = [
+        {
+          key: 'ARRAY_LIKE',
+          value: '[1, 2, 3]',
+          originalPath: 'ArrayLike',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'OBJECT_LIKE',
+          value: '{key: value}',
+          originalPath: 'ObjectLike',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'JSON_VALUE',
+          value: '{"name": "John", "age": 30}',
+          originalPath: 'JsonValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'TEMPLATE_VALUE',
+          value: 'Hello ${name}!',
+          originalPath: 'TemplateValue',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(bracketVars, 'docker-compose', defaultFormatOptions)
+      
+      // All values with brackets/braces should be quoted to prevent YAML structure interpretation
+      expect(result).toContain('ARRAY_LIKE="[1, 2, 3]"')
+      expect(result).toContain('OBJECT_LIKE="{key: value}"')
+      expect(result).toContain('JSON_VALUE="{\\"name\\": \\"John\\", \\"age\\": 30}"')
+      expect(result).toContain('TEMPLATE_VALUE="Hello ${name}!"')
+    })
+
+    it('should quote Docker Compose YAML values that look like YAML literals correctly', () => {
+      const yamlLiteralVars: EnvironmentVariable[] = [
+        {
+          key: 'BOOLEAN_TRUE',
+          value: 'true',
+          originalPath: 'BooleanTrue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'BOOLEAN_FALSE',
+          value: 'false',
+          originalPath: 'BooleanFalse',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'BOOLEAN_YES',
+          value: 'yes',
+          originalPath: 'BooleanYes',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'BOOLEAN_NO',
+          value: 'no',
+          originalPath: 'BooleanNo',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'BOOLEAN_ON',
+          value: 'on',
+          originalPath: 'BooleanOn',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'BOOLEAN_OFF',
+          value: 'off',
+          originalPath: 'BooleanOff',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'NULL_VALUE',
+          value: 'null',
+          originalPath: 'NullValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'NUMBER_VALUE',
+          value: '123',
+          originalPath: 'NumberValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'FLOAT_VALUE',
+          value: '3.14',
+          originalPath: 'FloatValue',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'SCIENTIFIC_VALUE',
+          value: '1e10',
+          originalPath: 'ScientificValue',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(yamlLiteralVars, 'docker-compose', defaultFormatOptions)
+      
+      // All values that could be interpreted as YAML literals should be quoted
+      expect(result).toContain('BOOLEAN_TRUE="true"')
+      expect(result).toContain('BOOLEAN_FALSE="false"')
+      expect(result).toContain('BOOLEAN_YES="yes"')
+      expect(result).toContain('BOOLEAN_NO="no"')
+      expect(result).toContain('BOOLEAN_ON="on"')
+      expect(result).toContain('BOOLEAN_OFF="off"')
+      expect(result).toContain('NULL_VALUE="null"')
+      expect(result).toContain('NUMBER_VALUE="123"')
+      expect(result).toContain('FLOAT_VALUE="3.14"')
+      expect(result).toContain('SCIENTIFIC_VALUE="1e10"')
+    })
+
+    it('should quote Docker Compose YAML values with leading/trailing whitespace correctly', () => {
+      const whitespaceVars: EnvironmentVariable[] = [
+        {
+          key: 'LEADING_SPACE',
+          value: ' starts with space',
+          originalPath: 'LeadingSpace',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'TRAILING_SPACE',
+          value: 'ends with space ',
+          originalPath: 'TrailingSpace',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'BOTH_SPACES',
+          value: ' has both spaces ',
+          originalPath: 'BothSpaces',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'LEADING_TAB',
+          value: '\tstarts with tab',
+          originalPath: 'LeadingTab',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'TRAILING_NEWLINE',
+          value: 'ends with newline\n',
+          originalPath: 'TrailingNewline',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(whitespaceVars, 'docker-compose', defaultFormatOptions)
+      
+      // All values with leading/trailing whitespace should be quoted
+      expect(result).toContain('LEADING_SPACE=" starts with space"')
+      expect(result).toContain('TRAILING_SPACE="ends with space "')
+      expect(result).toContain('BOTH_SPACES=" has both spaces "')
+      expect(result).toContain('LEADING_TAB="\tstarts with tab"')
+      expect(result).toContain('TRAILING_NEWLINE="ends with newline\n"')
+    })
+
+    it('should quote Docker Compose YAML values with sign prefixes correctly', () => {
+      const signVars: EnvironmentVariable[] = [
+        {
+          key: 'PLUS_PREFIX',
+          value: '+1234',
+          originalPath: 'PlusPrefix',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'MINUS_PREFIX',
+          value: '-5678',
+          originalPath: 'MinusPrefix',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'PLUS_WORD',
+          value: '+positive',
+          originalPath: 'PlusWord',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'MINUS_WORD',
+          value: '-negative',
+          originalPath: 'MinusWord',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(signVars, 'docker-compose', defaultFormatOptions)
+      
+      // All values starting with + or - should be quoted to prevent number interpretation
+      expect(result).toContain('PLUS_PREFIX="+1234"')
+      expect(result).toContain('MINUS_PREFIX="-5678"')
+      expect(result).toContain('PLUS_WORD="+positive"')
+      expect(result).toContain('MINUS_WORD="-negative"')
+    })
+
+    it('should not quote simple safe Docker Compose YAML values', () => {
+      const safeVars: EnvironmentVariable[] = [
+        {
+          key: 'SIMPLE_WORD',
+          value: 'hello',
+          originalPath: 'SimpleWord',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'ALPHANUMERIC',
+          value: 'abc123',
+          originalPath: 'Alphanumeric',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'WITH_UNDERSCORES',
+          value: 'hello_world_123',
+          originalPath: 'WithUnderscores',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'WITH_DOTS',
+          value: 'example.com',
+          originalPath: 'WithDots',
+          originalType: 'string',
+          isArrayElement: false,
+        },
+        {
+          key: 'WITH_SLASHES',
+          value: 'path/to/file',
+          originalPath: 'WithSlashes',
+          originalType: 'string',
+          isArrayElement: false,
+        }
+      ]
+
+      const result = formatOutput(safeVars, 'docker-compose', defaultFormatOptions)
+      
+      // These safe values should not be quoted
+      expect(result).toContain('SIMPLE_WORD=hello')
+      expect(result).toContain('ALPHANUMERIC=abc123')
+      expect(result).toContain('WITH_UNDERSCORES=hello_world_123')
+      expect(result).toContain('WITH_DOTS=example.com')
+      expect(result).toContain('WITH_SLASHES=path/to/file')
+      
+      // Verify no quotes are present for these values
+      expect(result).not.toContain('SIMPLE_WORD="hello"')
+      expect(result).not.toContain('ALPHANUMERIC="abc123"')
+      expect(result).not.toContain('WITH_UNDERSCORES="hello_world_123"')
+      expect(result).not.toContain('WITH_DOTS="example.com"')
+      expect(result).not.toContain('WITH_SLASHES="path/to/file"')
+    })
   })
 
   describe('env-file format', () => {
