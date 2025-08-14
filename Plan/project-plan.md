@@ -1,27 +1,28 @@
 # .NET AppSettings to Docker-Compose Environment Variables Converter
 
 ## Project Overview
+
 A frontend-only web application that converts .NET appsettings.json files to docker-compose environment variable format. The project will be hosted on GitHub Pages and built with TypeScript.
 
 ## Architecture
 
 ### Business Logic Layer (TypeScript)
+
 - **Parser Module** (`src/core/parser.ts`)
   - Parse appsettings.json structure
   - Handle nested objects and arrays
   - Validate JSON format
-  
 - **Converter Module** (`src/core/converter.ts`)
   - Transform JSON keys to environment variable format
   - Apply naming conventions (UPPER_CASE, underscores)
   - Handle special characters and reserved words
-  
 - **Formatter Module** (`src/core/formatter.ts`)
   - Generate docker-compose.yml format
   - Output environment variables section
   - Support different output formats (YAML, .env file)
 
 ### UI Layer (Vue.js)
+
 - **Framework**: Vue 3 with Composition API
 - **Components**:
   - File upload/paste area for appsettings.json
@@ -33,18 +34,22 @@ A frontend-only web application that converts .NET appsettings.json files to doc
 ## Technical Requirements
 
 ### Core Features
+
 1. **Input Methods**:
+
    - File upload (.json)
    - Direct text paste
    - Drag & drop support
 
 2. **Conversion Logic**:
+
    - Flatten nested JSON structure
    - Convert to environment variable naming (e.g., `Database:ConnectionString` → `DATABASE_CONNECTIONSTRING`)
    - Handle arrays and complex objects
    - Preserve data types in comments
 
 3. **Output Formats**:
+
    - Docker-compose environment section
    - .env file format
    - Copy-ready environment variables
@@ -55,17 +60,18 @@ A frontend-only web application that converts .NET appsettings.json files to doc
    - User-friendly error messages
 
 ### Advanced Features
+
 1. **Customization Options**:
    - Prefix configuration
    - Naming convention selection
    - Value transformation rules
-   
 2. **Export Options**:
    - Download as docker-compose.yml
    - Download as .env file
    - Copy individual variables
 
 ## Project Structure
+
 ```
 src/
 ├── core/                 # Business logic (TypeScript)
@@ -91,24 +97,28 @@ src/
 ## Development Phases
 
 ### Phase 1: Core Business Logic
+
 - Implement JSON parser
 - Create conversion algorithms
 - Add basic formatting
 - Write unit tests
 
 ### Phase 2: User Interface
+
 - Design and implement UI components
 - Add file upload functionality
 - Implement live preview
 - Add copy/download features
 
 ### Phase 3: Enhancement & Polish
+
 - Add customization options
 - Implement error handling
 - Optimize performance
 - Add comprehensive documentation
 
 ## Technology Stack
+
 - **Language**: TypeScript
 - **Build Tool**: Vite
 - **UI Framework**: Vue 3 (Composition API)
@@ -120,6 +130,7 @@ src/
 ## Example Conversion
 
 ### Input (appsettings.json):
+
 ```json
 {
   "ConnectionStrings": {
@@ -136,6 +147,7 @@ src/
 ```
 
 ### Output (docker-compose environment):
+
 ```yaml
 environment:
   - CONNECTIONSTRINGS_DEFAULTCONNECTION=Server=localhost;Database=MyApp;
@@ -147,88 +159,11 @@ environment:
 ## CI/CD Pipeline (GitHub Actions)
 
 ### Automated Testing Workflow
-```yaml
-# .github/workflows/test.yml
-name: Test Suite
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run type checking
-      run: npm run type-check
-    
-    - name: Run linting
-      run: npm run lint
-    
-    - name: Run unit tests
-      run: npm run test:unit
-    
-    - name: Run coverage
-      run: npm run test:coverage
-    
-    - name: Build project
-      run: npm run build
-```
-
-### Deployment Workflow
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    
-    - name: Install and build
-      run: |
-        npm ci
-        npm run build
-    
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-    
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: './dist'
-    
-    - name: Deploy to GitHub Pages
-      uses: actions/deploy-pages@v4
-```
+- github actions should run unit tests
 
 ## Package.json Scripts
+
 ```json
 {
   "scripts": {
@@ -246,6 +181,7 @@ jobs:
 ```
 
 ## Success Criteria
+
 1. Accurate conversion of nested JSON to flat environment variables
 2. Multiple output format support
 3. User-friendly Vue.js interface with real-time preview
