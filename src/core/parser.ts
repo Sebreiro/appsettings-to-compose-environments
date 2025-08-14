@@ -194,12 +194,8 @@ function validateCommonSections(data: JsonObject, warnings: string[]): void {
     }
   }
 
-  // Check for array values in root (uncommon in appsettings.json)
-  Object.entries(data).forEach(([key, value]) => {
-    if (Array.isArray(value) && key !== 'AllowedHosts') {
-      warnings.push(`Array found at root level: "${key}" - ensure this is intentional`)
-    }
-  })
+  // Note: Root-level array properties are valid in appsettings.json (e.g., Servers, AllowedHosts)
+  // No warning needed for these as they are legitimate configuration patterns
 }
 
 /**
@@ -287,7 +283,7 @@ export function createProcessingError(
  * @returns Value at path or undefined
  */
 export function getNestedValue(obj: JsonObject, path: string): JsonValue | undefined {
-  return path.split('.').reduce((current, key) => {
+  return path.split('.').reduce((current: JsonValue | undefined, key: string): JsonValue | undefined => {
     if (current && typeof current === 'object' && !Array.isArray(current)) {
       return (current as JsonObject)[key]
     }

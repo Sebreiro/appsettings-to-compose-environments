@@ -172,7 +172,8 @@ describe('parseAppSettings', () => {
 
     const result = parseAppSettings(data)
     expect(result.isValid).toBe(true)
-    expect(result.warnings).toContain('Array found at root level: "CustomArray" - ensure this is intentional')
+    // Note: Removed array warning as root-level array properties are valid in appsettings.json
+    expect(result.warnings).not.toContain('CustomArray') // Should not warn about valid array properties
     expect(result.warnings).not.toContain('AllowedHosts')
   })
 
